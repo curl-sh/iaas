@@ -26,12 +26,41 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   end
 
   config.vm.provision "install", type: "shell", inline: <<-SHELL
-    function tzz() {
+    tzz() {
       "$@" >/dev/null 2>&1
     }
 
+    isOlder() {
+      [ -r ${1} -a `expr $(date +%s) - $(stat -c %Y ${1})` -gt ${2:-0} ] && {
+        return 0 # true
+      }
+      return 1 # false
+    }
+
+    gh() {
+      git_user=$(echo $1 | cut -d '/' -f1)
+      git_repo=$(echo $1 | cut -s -d '/' -f2 | sed 's/\.git$//g')
+
+      src="https://github.com/${git_user}/${git_repo}.git"
+      dst="/vagrant/.persistent/github.com/${git_user}/${git_repo}"
+
+      echo "${src} > ${dst}"
+
+      [ -d "${dst}" ] || {
+        echo " ... cloning"
+        tzz mkdir -p ${dst}
+        tzz git clone --recursive ${src} ${dst}
+      }
+
+      isOlder "${dst}/.git" 3600 && {
+        echo " ... updating"
+        git -C ${dst} pull --recurse-submodules
+        git -C ${dst} submodule update --recursive
+      }
+    }
+
     echo "update and upgrade"
-    [ `expr $(date +%s) - $(stat -c %Y /var/cache/apt/)` -gt 3600 ] && { # last update older than 1 hour
+    isOlder /var/cache/apt 3600 && {
       echo "  ... updating"
       tzz apt-get update
       tzz apt-get upgrade
