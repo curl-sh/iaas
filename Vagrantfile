@@ -26,14 +26,40 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   end
 
   config.vm.provision "install", type: "shell", inline: <<-SHELL
-    df | grep /dev/sdb1 || \
-      echo ",,,," | sfdisk -uS /dev/sdb && \
-      mkfs.ext4 /dev/sdb1 -L var-lib-docker && \
-      echo "LABEL=var-lib-docker /var/lib/docker ext4 defaults 0 0" >> /etc/fstab && \
-      mkdir -p /var/lib/docker && \
-      mount -L var-lib-docker
+    function tzz() {
+      "$@" >/dev/null 2>&1
+    }
 
-    command -v docker || curl -sL https://get.docker.com/ | sh && \
-    usermod -aG docker vagrant
+    echo "update and upgrade"
+    [ `expr $(date +%s) - $(stat -c %Y /var/cache/apt/)` -gt 3600 ] && { # last update older than 1 hour
+      echo "  ... updating"
+      tzz apt-get update
+      tzz apt-get upgrade
+    }
+
+    echo "install git"
+    tzz command -v git || {
+      echo "  ... installing"
+      tzz apt-get install -y git
+    }
+
+    echo "prepare docker"
+    df | tzz grep /dev/sdb1 || {
+      echo "  ... /var/lib/docker -> /dev/sdb1 (.persistent/var-lib-docker.vdi)"
+      tzz echo ",,,," | sfdisk -uS /dev/sdb
+      tzz mkfs.ext4 /dev/sdb1 -L var-lib-docker
+      echo "LABEL=var-lib-docker /var/lib/docker ext4 defaults 0 0" >> /etc/fstab
+      tzz mkdir -p /var/lib/docker
+      tzz mount -L var-lib-docker
+    }
+
+    echo "install docker"
+    tzz command -v docker || {
+      echo "  ... curl -sL https://get.docker.com | sh"
+      tzz curl -sL https://get.docker.com | sh
+      tzz usermod -aG docker vagrant
+    }
+
   SHELL
+
 end
