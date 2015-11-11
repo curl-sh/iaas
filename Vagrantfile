@@ -29,7 +29,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.provision "install", type: "shell", inline: <<-SHELL
     tzz() {
-      "$@" >/dev/null 2>&1
+      "$@" >/dev/null
     }
 
     isOlder() {
@@ -42,6 +42,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     gh() {
       git_user=$(echo $1 | cut -d '/' -f1)
       git_repo=$(echo $1 | cut -s -d '/' -f2 | sed 's/\.git$//g')
+      isAlreadyCloned=0 # true
+
+      [ -L "/usr/local/${git_user}" ] || {
+        tzz ln -s /vagrant/.persistent/github.com/${git_user} /usr/local/${git_user}
+      }
 
       src="https://github.com/${git_user}/${git_repo}.git"
       dst="/vagrant/.persistent/github.com/${git_user}/${git_repo}"
@@ -49,16 +54,18 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       echo "${src} > ${dst}"
 
       [ -d "${dst}" ] || {
-        echo " ... cloning"
+        isAlreadyCloned=1 # false
+        echo "  ... cloning"
         tzz mkdir -p ${dst}
         tzz git clone --recursive ${src} ${dst}
       }
 
       isOlder "${dst}/.git" 3600 && {
-        echo " ... updating"
+        echo "  ... updating"
         tzz git -C ${dst} pull --recurse-submodules
         tzz git -C ${dst} submodule update --recursive
       }
+      return $isAlreadyCloned
     }
 
     echo "update and upgrade"
@@ -72,6 +79,31 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     tzz command -v git || {
       echo "  ... installing"
       tzz apt-get install -y git
+    }
+
+    echo "install zsh"
+    tzz command -v zsh || {
+      echo "  ... installing zsh"
+      tzz apt-get install -y zsh
+
+      gh clvv/fasd || {
+        echo "  ... installing fasd"
+        tzz find /usr/local/clvv/fasd -type f -exec touch {} +
+        tzz make -C /usr/local/clvv/fasd -f /usr/local/clvv/fasd/Makefile install
+      }
+
+      gh kaluzki/prezto || {
+        echo "  ... installing prezto"
+        echo "ZPREZTODIR=/usr/local/kaluzki/prezto" >> /etc/zsh/zshenv
+        for file in zshenv zprofile zshrc zlogin; do
+          echo 'source $ZPREZTODIR/runcoms/'${file} >> /etc/zsh/${file}
+        done
+      }
+
+      for login in root vagrant; do
+        echo "  ... set zsh as login shell for $login"
+        chsh -s $(which zsh) $login
+      done
     }
 
     echo "prepare ansible"
