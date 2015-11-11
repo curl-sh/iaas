@@ -10,9 +10,11 @@ VAGRANTFILE_API_VERSION = "2"
 VAR_LIB_DOCKER = File.join(File.dirname(File.expand_path(__FILE__)), '.persistent', 'var-lib-docker.vdi')
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  config.ssh.insert_key = false
+
   config.vm.box = "ubuntu/trusty64"
   config.vm.hostname = "curl-sh"
-  config.ssh.insert_key = false
+  config.vm.boot_timeout = 30
 
   config.vm.provider :virtualbox do |v|
     v.name = "curl-sh"
@@ -54,8 +56,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
       isOlder "${dst}/.git" 3600 && {
         echo " ... updating"
-        git -C ${dst} pull --recurse-submodules
-        git -C ${dst} submodule update --recursive
+        tzz git -C ${dst} pull --recurse-submodules
+        tzz git -C ${dst} submodule update --recursive
       }
     }
 
@@ -63,7 +65,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     isOlder /var/cache/apt 3600 && {
       echo "  ... updating"
       tzz apt-get update
-      tzz apt-get upgrade
+      tzz apt-get -y upgrade
     }
 
     echo "install git"
@@ -71,6 +73,16 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       echo "  ... installing"
       tzz apt-get install -y git
     }
+
+    echo "prepare ansible"
+    tzz command -v pip || {
+      echo "  ... installing python-setuptools python-pip"
+      tzz apt-get install -y python-setuptools python-pip
+      echo "  ... installing paramiko PyYAML Jinja2 httplib2 six"
+      tzz pip install paramiko PyYAML Jinja2 httplib2 six
+    }
+
+    gh ansible/ansible
 
     echo "prepare docker"
     df | tzz grep /dev/sdb1 || {
