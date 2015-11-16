@@ -86,17 +86,12 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       echo "  ... installing zsh"
       tzz apt-get install -y zsh
 
-      gh clvv/fasd || {
-        echo "  ... installing fasd"
-        tzz find /usr/local/clvv/fasd -type f -exec touch {} +
-        tzz make -C /usr/local/clvv/fasd -f /usr/local/clvv/fasd/Makefile install
-      }
-
       gh kaluzki/prezto || {
         echo "  ... installing prezto"
-        echo "ZPREZTODIR=/usr/local/kaluzki/prezto" >> /etc/zsh/zshenv
+        echo 'PREZTO_DIR=/usr/local/kaluzki/prezto' >> /etc/zsh/zshenv
+        echo 'PREZTORC="\${PREZTO_DIR}/runcoms/zpreztorc"' >> /etc/zsh/zshenv
         for file in zshenv zprofile zshrc zlogin; do
-          echo 'source $ZPREZTODIR/runcoms/'${file} >> /etc/zsh/${file}
+          echo '[ -s "\${PREZTO_DIR}/runcoms/zshenv" ] && source ${PREZTO_DIR}/runcoms/'${file} >> /etc/zsh/${file}
         done
       }
 
