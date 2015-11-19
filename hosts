@@ -1,0 +1,5 @@
+[all]
+localhost ansible_connection=local
+ubuntu-14.04 ansible_connection=docker
+ubuntu-12.04 ansible_connection=docker
+centos-7 ansible_connection=docker

@@ -1,0 +1,17 @@
+- hosts: localhost
+  tasks:
+  - name: ubuntu-14.04
+    docker:
+      name: ubuntu-14.04
+      image: ubuntu:14.04
+      command: sh -c "apt-get install -y python && tail -f /var/log/*log /var/log/*/*log"
+  - name: ubuntu-12.04
+    docker:
+      name: ubuntu-12.04
+      image: ubuntu:12.04
+      command: sh -c "apt-get install -y python && tail -f /var/log/*log /var/log/*/*log"
+  - name: centos-7
+    docker:
+      name: centos-7
+      image: centos:7
+      command: sh -c "tail -f /var/log/*log /var/log/*/*log"
