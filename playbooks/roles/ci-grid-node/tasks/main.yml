@@ -1,0 +1,6 @@
+---
+  - name: "with {{distro}}"
+    docker:
+      name: "{{distro|replace(':', '-')}}"
+      image: "{{distro}}"
+      command: sh -c "tail -f /dev/null"
