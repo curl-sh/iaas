@@ -1,0 +1,8 @@
+---
+  _distro: "{{image.split(':')|first}}"
+  _commands: {
+    "ubuntu": "sh -c 'apt-get install -y python && tail -f /dev/null'",
+    "debian": "sh -c 'apt-get update && apt-get install -y python && tail -f /dev/null'",
+    "default": "sh -c 'tail -f /dev/null'",
+  }
+  command: "{{_commands.get(image, _commands.get(_distro, _commands.get('default')))}}"

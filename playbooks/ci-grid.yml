@@ -1,13 +1,11 @@
 ---
 - hosts: localhost
   roles:
-    - {role: ci-grid-node, distro: "ubuntu:12.04"}
-    - {role: ci-grid-node, distro: "ubuntu:14.04"}
-    - {role: ci-grid-node, distro: "ubuntu:15.04"}
-    - {role: ci-grid-node, distro: "ubuntu:15.10"}
-    - {role: ci-grid-node, distro: "debian:6"}
-    - {role: ci-grid-node, distro: "debian:7"}
-    - {role: ci-grid-node, distro: "debian:8"}
-    - {role: ci-grid-node, distro: "centos:5"}
-    - {role: ci-grid-node, distro: "centos:6"}
-    - {role: ci-grid-node, distro: "centos:7"}
+    - {role: ci-grid-node, image: "ubuntu:12.04"}
+    - {role: ci-grid-node, image: "ubuntu:14.04"}
+    - {role: ci-grid-node, image: "ubuntu:15.04"}
+    - {role: ci-grid-node, image: "ubuntu:15.10"}
+    - {role: ci-grid-node, image: "debian:7"}
+    - {role: ci-grid-node, image: "debian:8"}
+    - {role: ci-grid-node, image: "centos:6"}
+    - {role: ci-grid-node, image: "centos:7"}

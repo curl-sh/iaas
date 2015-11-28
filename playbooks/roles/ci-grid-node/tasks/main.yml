@@ -1,6 +1,6 @@
 ---
-  - name: "with {{distro}}"
+  - name: "start grid node"
     docker:
-      name: "{{distro|replace(':', '-')}}"
-      image: "{{distro}}"
-      command: sh -c "tail -f /dev/null"
+      name: "{{image|replace(':', '-')}}"
+      image: "{{image}}"
+      command: "{{command}}"
